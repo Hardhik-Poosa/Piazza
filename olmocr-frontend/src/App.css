@@ -22,3 +22,95 @@ h1 {
   font-weight: 500;
   box-shadow: 0 2px 8px rgba(255,79,79,0.08);
 }
+
+/* File Upload Styles */
+.file-upload-container {
+  margin: 2rem auto;
+  max-width: 600px;
+}
+
+.drop-area {
+  border: 2px dashed #cbd5e1;
+  border-radius: 8px;
+  padding: 3rem 2rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background-color: #f8fafc;
+}
+
+.drop-area:hover {
+  border-color: #2563eb;
+  background-color: #eff6ff;
+}
+
+.drop-area.loading {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.upload-icon {
+  font-size: 3rem;
+  display: block;
+  margin-bottom: 1rem;
+}
+
+.loader {
+  display: inline-block;
+  position: relative;
+  width: 80px;
+  height: 80px;
+}
+
+/* Results Display Styles */
+.results-container {
+  margin: 2rem auto;
+  padding: 1.5rem;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.entities-section, .tables-section, .raw-text-section {
+  margin-bottom: 1.5rem;
+}
+
+.entity-list {
+  background-color: #f8fafc;
+  padding: 1rem;
+  border-radius: 6px;
+  border-left: 4px solid #2563eb;
+}
+
+.entity-list > div {
+  margin-bottom: 0.5rem;
+}
+
+.extracted-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+}
+
+.extracted-table th, .extracted-table td {
+  border: 1px solid #e2e8f0;
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+}
+
+.extracted-table th {
+  background-color: #f1f5f9;
+  font-weight: 600;
+}
+
+.raw-text-block {
+  background-color: #1e293b;
+  color: #f8fafc;
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  font-family: monospace;
+  max-height: 300px;
+  overflow-y: auto;
+}

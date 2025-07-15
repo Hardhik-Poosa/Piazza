@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OlmOCR Data Extraction - Working App</title>
+    <style>
+        body {
+            font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(120deg, #e6f0ff 0%, #f8faff 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2563eb;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+        }
+        .upload-area {
+            border: 2px dashed #cbd5e1;
+            padding: 60px 20px;
+            text-align: center;
+            margin: 20px 0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-radius: 8px;
+            background-color: #f8fafc;
+        }
+        .upload-area:hover {
+            border-color: #2563eb;
+            background-color: #eff6ff;
+            transform: translateY(-2px);
+        }
+        .upload-area.loading {
+            pointer-events: none;
+            opacity: 0.7;
+        }
+        .upload-icon {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            display: block;
+        }
+        .results {
+            margin-top: 30px;
+            padding: 20px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            background-color: #f8fafc;
+            display: none;
+        }
+        .error {
+            background-color: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #dc2626;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            display: none;
+        }
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #2563eb;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .entity-section {
+            margin: 15px 0;
+            padding: 15px;
+            background-color: white;
+            border-radius: 6px;
+            border-left: 4px solid #2563eb;
+        }
+        .raw-text {
+            background-color: #1f2937;
+            color: #f9fafb;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        th, td {
+            border: 1px solid #e2e8f0;
+            padding: 8px 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #f1f5f9;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>OlmOCR Data Extraction</h1>
+        
+        <div class="upload-area" id="uploadArea">
+            <span class="upload-icon">📄</span>
+            <p id="uploadText">Drag & drop a PDF or image, or click to select</p>
+            <input type="file" id="fileInput" style="display: none;" accept=".pdf,.png,.jpg,.jpeg">
+        </div>
+        
+        <div class="error" id="errorArea">
+            <strong>Error:</strong> <span id="errorMessage"></span>
+        </div>
+        
+        <div class="results" id="resultsArea">
+            <h2>Extracted Data</h2>
+            <div id="extractedContent"></div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const uploadArea = document.getElementById('uploadArea');
+            const fileInput = document.getElementById('fileInput');
+            const resultsArea = document.getElementById('resultsArea');
+            const extractedContent = document.getElementById('extractedContent');
+            const errorArea = document.getElementById('errorArea');
+            const errorMessage = document.getElementById('errorMessage');
+            const uploadText = document.getElementById('uploadText');
+            
+            let isLoading = false;
+            
+            uploadArea.addEventListener('click', function() {
+                if (!isLoading) {
+                    fileInput.click();
+                }
+            });
+            
+            uploadArea.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                if (!isLoading) {
+                    uploadArea.style.borderColor = '#2563eb';
+                    uploadArea.style.backgroundColor = '#eff6ff';
+                }
+            });
+            
+            uploadArea.addEventListener('dragleave', function() {
+                uploadArea.style.borderColor = '#cbd5e1';
+                uploadArea.style.backgroundColor = '#f8fafc';
+            });
+            
+            uploadArea.addEventListener('drop', function(e) {
+                e.preventDefault();
+                uploadArea.style.borderColor = '#cbd5e1';
+                uploadArea.style.backgroundColor = '#f8fafc';
+                
+                if (!isLoading && e.dataTransfer.files.length) {
+                    handleFile(e.dataTransfer.files[0]);
+                }
+            });
+            
+            fileInput.addEventListener('change', function() {
+                if (!isLoading && fileInput.files.length) {
+                    handleFile(fileInput.files[0]);
+                }
+            });
+            
+            function showError(message) {
+                errorMessage.textContent = message;
+                errorArea.style.display = 'block';
+                resultsArea.style.display = 'none';
+            }
+            
+            function hideError() {
+                errorArea.style.display = 'none';
+            }
+            
+            function setLoading(loading) {
+                isLoading = loading;
+                uploadArea.classList.toggle('loading', loading);
+                
+                if (loading) {
+                    uploadText.innerHTML = '<span class="loading-spinner"></span> Processing file...';
+                } else {
+                    uploadText.textContent = 'Drag & drop a PDF or image, or click to select';
+                }
+            }
+            
+            async function handleFile(file) {
+                hideError();
+                setLoading(true);
+                resultsArea.style.display = 'none';
+                
+                const formData = new FormData();
+                formData.append('file', file);
+                
+                try {
+                    const response = await fetch('http://localhost:5000/extract', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`Server error: ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    
+                    if (data.error) {
+                        throw new Error(data.error);
+                    }
+                    
+                    displayResults(data.extracted_data || data);
+                    
+                } catch (error) {
+                    console.error('Error:', error);
+                    showError(error.message || 'An error occurred while processing the file.');
+                } finally {
+                    setLoading(false);
+                }
+            }
+            
+            function displayResults(data) {
+                let html = '';
+                
+                if (data.entities) {
+                    html += '<div class="entity-section">';
+                    html += '<h3>📋 Entities</h3>';
+                    html += '<p><strong>Names:</strong> ' + (data.entities.names?.join(', ') || 'None') + '</p>';
+                    html += '<p><strong>Dates:</strong> ' + (data.entities.dates?.join(', ') || 'None') + '</p>';
+                    html += '<p><strong>Addresses:</strong> ' + (data.entities.addresses?.join(', ') || 'None') + '</p>';
+                    html += '</div>';
+                }
+                
+                if (data.tables && data.tables.length > 0) {
+                    html += '<div class="entity-section">';
+                    html += '<h3>📊 Tables</h3>';
+                    data.tables.forEach((table, idx) => {
+                        html += '<table>';
+                        html += '<thead><tr>';
+                        table.headers.forEach(header => {
+                            html += '<th>' + header + '</th>';
+                        });
+                        html += '</tr></thead>';
+                        html += '<tbody>';
+                        table.rows.forEach(row => {
+                            html += '<tr>';
+                            row.forEach(cell => {
+                                html += '<td>' + cell + '</td>';
+                            });
+                            html += '</tr>';
+                        });
+                        html += '</tbody></table>';
+                    });
+                    html += '</div>';
+                }
+                
+                if (data.raw_text) {
+                    html += '<div class="entity-section">';
+                    html += '<h3>📄 Raw Text</h3>';
+                    html += '<div class="raw-text">' + data.raw_text + '</div>';
+                    html += '</div>';
+                }
+                
+                extractedContent.innerHTML = html;
+                resultsArea.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>

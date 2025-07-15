@@ -2,12 +2,12 @@ import React, { useState, useRef } from 'react';
 import './App.css';
 
 function App() {
-  const [extractedData, setExtractedData] = useState<any>(null);
+  const [extractedData, setExtractedData] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [error, setError] = useState(null);
+  const fileInputRef = useRef(null);
 
-  const handleFileUpload = async (file: File) => {
+  const handleFileUpload = async (file) => {
     setLoading(true);
     setError(null);
     setExtractedData(null);
@@ -23,34 +23,34 @@ function App() {
       }
       const data = await response.json();
       setExtractedData(data.extracted_data || data.extractedData || data);
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || 'An error occurred.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e) => {
     if (e.target.files && e.target.files[0]) {
       handleFileUpload(e.target.files[0]);
     }
   };
 
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+  const handleDrop = (e) => {
     e.preventDefault();
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       handleFileUpload(e.dataTransfer.files[0]);
     }
   };
 
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+  const handleDragOver = (e) => {
     e.preventDefault();
   };
 
   return (
     <div className="app-container">
       <h1>OlmOCR Data Extraction</h1>
-
+      
       {/* File Upload Component */}
       <div className="file-upload-container">
         <div
@@ -104,19 +104,19 @@ function App() {
           {extractedData.tables && extractedData.tables.length > 0 && (
             <div className="tables-section">
               <h3>Tables</h3>
-              {extractedData.tables.map((table: any, idx: number) => (
+              {extractedData.tables.map((table, idx) => (
                 <table className="extracted-table" key={idx}>
                   <thead>
                     <tr>
-                      {table.headers.map((header: string, i: number) => (
+                      {table.headers.map((header, i) => (
                         <th key={i}>{header}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
-                    {table.rows.map((row: string[], i: number) => (
+                    {table.rows.map((row, i) => (
                       <tr key={i}>
-                        {row.map((cell: string, j: number) => (
+                        {row.map((cell, j) => (
                           <td key={j}>{cell}</td>
                         ))}
                       </tr>
